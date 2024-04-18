@@ -4,6 +4,7 @@ import os
 import chromadb
 from langchain.chains import RetrievalQA
 from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from chromadb.config import Settings
 
 from langchain.vectorstores import Chroma
@@ -38,14 +39,15 @@ def setup_page():
 # get necessary environment variables for later use
 def get_environment_variables():
     model = os.environ.get("MODEL", "mistral")
-    embeddings_model_name = os.environ.get("EMBEDDINGS_MODEL_NAME", "all-MiniLM-L6-v2")
+    # embeddings_model_name = os.environ.get("EMBEDDINGS_MODEL_NAME", "all-MiniLM-L6-v2")
+    embeddings_model_name = os.environ.get("EMBEDDINGS_MODEL_NAME", "nomic-embed-text")
     persist_directory = os.environ.get("PERSIST_DIRECTORY", "db")
     target_source_chunks = int(os.environ.get('TARGET_SOURCE_CHUNKS', 4))
     return model, embeddings_model_name, persist_directory, target_source_chunks
 
 # create knowledge base retriever
 def create_knowledge_base(embeddings_model_name, persist_directory, target_source_chunks):
-    embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
+    embeddings = OllamaEmbeddings(model=embeddings_model_name)
     db = Chroma(persist_directory=persist_directory, embedding_function=embeddings)
     retriever = db.as_retriever(search_kwargs={"k": target_source_chunks})
     return retriever
@@ -96,7 +98,9 @@ def main():
     examples = show_examples()
     model, embeddings_model_name, persist_directory, target_source_chunks = get_environment_variables()
     retriever = create_knowledge_base(embeddings_model_name, persist_directory, target_source_chunks)
-    
+
+    # say something before the query
+
     query = st.chat_input(placeholder='Ask a question...')  # starting with empty query
 
     if query:   # if user input a query and hit 'Enter'
